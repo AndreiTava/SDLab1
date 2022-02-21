@@ -79,6 +79,30 @@ void insertion_sort(vector<int>& v)
     }
 }
 
+void rec_merge(vector<int>::iterator left, vector<int>::iterator right)
+{
+    auto dist = distance(left,right) - 1;
+    auto middle = left;
+    advance(middle, dist / 2 + 1);
+    if (dist > 1)
+    {
+        rec_merge(left,middle);
+        rec_merge(middle,right);
+    }
+    vector<int> aux(dist + 1);
+    merge(left, middle, middle, right, aux.begin());
+    for (const int& nr : aux)
+    {
+        *left = nr;
+        left++;
+    }
+}
+
+void merge_sort(vector<int>& v)
+{
+    
+    rec_merge(v.begin(), v.end());
+}
 
 int main()
 {
@@ -104,7 +128,7 @@ int main()
 
         auto beg = chrono::high_resolution_clock::now();
 
-        std_sort(v);
+        merge_sort(v);
 
         auto end = chrono::high_resolution_clock::now();
         auto time = chrono::duration_cast<chrono::microseconds>(end - beg);
