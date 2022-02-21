@@ -81,15 +81,15 @@ void insertion_sort(vector<int>& v)
 
 void rec_merge(vector<int>::iterator left, vector<int>::iterator right)
 {
-    auto dist = distance(left,right) - 1;
+    auto dist = distance(left,right);
     auto middle = left;
-    advance(middle, dist / 2 + 1);
-    if (dist > 1)
+    advance(middle, dist / 2);
+    if (dist > 2)
     {
         rec_merge(left,middle);
         rec_merge(middle,right);
     }
-    vector<int> aux(dist + 1);
+    vector<int> aux(dist);
     merge(left, middle, middle, right, aux.begin());
     for (const int& nr : aux)
     {
