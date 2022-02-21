@@ -89,14 +89,11 @@ void rec_merge(vector<int>::iterator left, vector<int>::iterator right)
         rec_merge(left,middle);
         rec_merge(middle,right);
     }
-    vector<int> aux(dist);
-    merge(left, middle, middle, right, aux.begin());
-    copy(aux.begin(), aux.end(), left);
+    inplace_merge(left,middle, right);
 }
 
 void merge_sort(vector<int>& v)
 {
-    
     rec_merge(v.begin(), v.end());
 }
 
