@@ -91,11 +91,7 @@ void rec_merge(vector<int>::iterator left, vector<int>::iterator right)
     }
     vector<int> aux(dist);
     merge(left, middle, middle, right, aux.begin());
-    for (const int& nr : aux)
-    {
-        *left = nr;
-        left++;
-    }
+    copy(aux.begin(), aux.end(), left);
 }
 
 void merge_sort(vector<int>& v)
