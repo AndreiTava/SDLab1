@@ -96,16 +96,23 @@ int main()
 
     auto gen = default_random_engine(s_gen());
 
-    vector<int> v = generate_test(gen,1000, 999);
+    for (auto test : tests)
+    {
+        cout << "size= " << test.first << " max=" << test.second << endl;
 
-    auto beg = chrono::high_resolution_clock::now();
+        vector<int> v = generate_test(gen, test.first, test.second);
 
-    insertion_sort(v);
+        auto beg = chrono::high_resolution_clock::now();
 
-    auto end = chrono::high_resolution_clock::now();
-    auto time = chrono::duration_cast<chrono::microseconds>(end - beg);
+        std_sort(v);
 
-    cout << time.count()<<" mcs , sorted: "<<is_sorted(v) << endl;
+        auto end = chrono::high_resolution_clock::now();
+        auto time = chrono::duration_cast<chrono::microseconds>(end - beg);
+
+        string result = (is_sorted(v) == 1) ? "yes" : "no";
+
+        cout << time.count() << " microsecs  sorted: " << result << endl;
+    }
 
 }
 
