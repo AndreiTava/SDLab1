@@ -1,6 +1,8 @@
 #include <iostream>
+#include <fstream>
 #include <chrono>
 #include <vector>
+#include <utility>
 #include <algorithm>
 #include <random>
 
@@ -78,12 +80,17 @@ void insertion_sort(vector<int>& v)
 }
 
 
-
-
-
-
 int main()
 {
+
+    int n_tests;
+
+    ifstream in("Tests.txt");
+
+    in >> n_tests;
+    vector<pair<int,int>> tests(n_tests);
+    for (auto it = tests.begin(); it != tests.end(); ++it)
+        in >> (*it).first>>(*it).second;
 
     random_device s_gen;
 
