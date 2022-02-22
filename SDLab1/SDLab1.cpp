@@ -146,10 +146,6 @@ void merge_sort(vector<int>& v)
 {
     rec_merge(v.begin(), v.end());
 }
-void ftest()
-{
-    static vector<int> aux(5);
-}
 
 int main()
 {
@@ -176,7 +172,6 @@ int main()
         auto beg = chrono::high_resolution_clock::now();
 
         merge_sort(v);
-        ftest();
 
         auto end = chrono::high_resolution_clock::now();
         auto time = chrono::duration_cast<chrono::microseconds>(end - beg);
