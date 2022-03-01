@@ -2,31 +2,35 @@
 #include <fstream>
 #include <chrono>
 #include <vector>
+#include <map>
 #include <utility>
 #include <algorithm>
 #include <random>
 
+
 using namespace std;
 
-void print_vect(vector<int>& v)
+typedef long long llong;
+
+vector<llong> glo_aux(1000000);
+
+void print_vect(vector<llong>& v)
 {
-    for (const int& nr : v)
+    for (const llong & nr : v)
         cout << nr << " ";
     cout << endl;
 }
 
-vector<int> generate_test(default_random_engine& gen ,const int size, const int max)
+vector<llong> generate_test(default_random_engine& gen ,const llong  size, const llong  max)
 {
-    vector<int> v(size);
-    auto dist = uniform_int_distribution<int>(1,max);
-    for (int& nr : v)
+    vector<llong> v(size);
+    auto dist = uniform_int_distribution<llong>(1,max);
+    for (llong& nr : v)
         nr = dist(gen);
     return v;
 }
 
-
-
-bool is_sorted(vector<int>& v)
+bool is_sorted(vector<llong>& v)
 {
     for (auto it = v.begin(); it != v.end() - 1; ++it)
         if (*it > *(it + 1))
@@ -34,12 +38,12 @@ bool is_sorted(vector<int>& v)
     return true;
 }
 
-void std_sort(vector<int>& v)
+void std_sort(vector<llong>& v)
 {
     sort(v.begin(), v.end());
 }
 
-void selection_sort(vector<int>& v)
+void selection_sort(vector<llong>& v)
 {
     auto min = v.begin();
     for (auto it = v.begin(); it != v.end() - 1; ++it)
@@ -52,7 +56,7 @@ void selection_sort(vector<int>& v)
     }
 }
 
-void bubble_sort(vector<int>& v)
+void bubble_sort(vector<llong>& v)
 {
     bool sorted = false;
     while (!sorted)
@@ -68,7 +72,7 @@ void bubble_sort(vector<int>& v)
 
 }
 
-void insertion_sort(vector<int>& v)
+void insertion_sort(vector<llong>& v)
 {
     for (auto it = v.begin() + 1; it != v.end(); ++it)
     {
@@ -81,24 +85,24 @@ void insertion_sort(vector<int>& v)
     }
 }
 
-void rec_merge_short(vector<int>::iterator left, vector<int>::iterator right)
+//void rec_merge_short(vector<llong>::iterator left, vector<llong>::iterator right)
+//{
+//    auto dist = distance(left,right);
+//    auto middle = left;
+//    advance(middle, dist / 2);
+//    if (dist > 2)
+//    {
+//        rec_merge_short(left,middle);
+//        rec_merge_short(middle,right);
+//    }
+//    inplace_merge(left,middle,right);
+//}
+void rec_merge(vector<llong>::iterator left, vector<llong>::iterator right)
 {
-    auto dist = distance(left,right);
-    auto middle = left;
-    advance(middle, dist / 2);
-    if (dist > 2)
-    {
-        rec_merge_short(left,middle);
-        rec_merge_short(middle,right);
-    }
-    inplace_merge(left,middle,right);
-}
-void rec_merge(vector<int>::iterator left, vector<int>::iterator right)
-{
+
     auto dist = distance(left, right);
-    static vector<int> aux(dist);
-    if (dist > aux.size())
-        aux.resize(dist);
+    if (dist > glo_aux.size())
+        glo_aux.resize(dist);
     auto middle = left;
     advance(middle, dist / 2);
     if (dist > 2)
@@ -106,79 +110,94 @@ void rec_merge(vector<int>::iterator left, vector<int>::iterator right)
         rec_merge(left, middle);
         rec_merge(middle, right);
     }
-    auto itlft = left, itrht = middle, itaux = aux.begin();
+    auto itlft = left, itrht = middle, itaux = glo_aux.begin();
     while (itlft != middle && itrht!= right)
     {
         if (itrht != right && *itlft <= *itrht)
-        {
-            *itaux = *itlft;
-            ++itaux;
-            ++itlft;
-        }
+            *itaux++ = *itlft++;
+ 
         if (itlft != middle && *itrht <= *itlft)
-        {
-            *itaux = *itrht;
-            ++itaux;
-            ++itrht;
-        }
+            *itaux++ = *itrht++;
     }
     while (itlft != middle)
-    {
-        *itaux = *itlft;
-        ++itlft;
-        ++itaux;
-    }
+        *itaux++ = *itlft++;
+
     while (itrht != right)
-    {
-        *itaux = *itrht;
-        ++itrht;
-        ++itaux;
-    }
-    for (auto itcpy = aux.begin(); itcpy != itaux; ++itcpy)
-    {
-        *left = *itcpy;
-        ++left;
-    }
-    if (itaux == aux.end())
-        aux.clear();
+        *itaux++ = *itrht++;
+
+    for (auto itcpy = glo_aux.begin(); itcpy != itaux; ++itcpy)
+        *left++ = *itcpy;
 }
-void merge_sort(vector<int>& v)
+void merge_sort(vector<llong>& v)
 {
     rec_merge(v.begin(), v.end());
 }
 
+void counting_sort(vector<llong>& v)
+{
+    llong max = 0;
+    for (const llong& nr : v)
+        if (nr > max)
+            max = nr;
+
+    if (max > glo_aux.size())
+        glo_aux.resize(max);
+
+    for (const llong& nr : v)
+        ++glo_aux[nr];
+
+    auto it = v.begin();
+    for (llong i=1; i<=max; ++i)
+        while (glo_aux[i])
+        {
+            *it++ = i;
+            --glo_aux[i];
+        }
+}
+void counting_map_sort(vector<llong>& v)
+{
+    map<llong, llong> aux;
+
+    for (const llong& nr : v)
+        ++aux[nr];
+
+    auto it = v.begin();
+    for (auto mit = aux.begin(); mit != aux.end(); ++mit)
+        while (mit->second)
+        {
+            *it++ = mit->first;
+            --(mit->second);
+        }
+};
+
+using namespace std;
+
 int main()
 {
-
-    int n_tests;
+    llong n_tests;
 
     ifstream in("Tests.txt");
 
     in >> n_tests;
-    vector<pair<int,int>> tests(n_tests);
+    vector<pair<llong,llong>> tests(n_tests);
     for (auto it = tests.begin(); it != tests.end(); ++it)
-        in >> (*it).first>>(*it).second;
+        in >> it->first>>it->second;
 
     random_device s_gen;
 
     auto gen = default_random_engine(s_gen());
 
-    for (auto test : tests)
+    for (auto& test : tests)
     {
         cout << "size= " << test.first << " max=" << test.second << endl;
 
-        vector<int> v = generate_test(gen, test.first, test.second);
-
+        vector<llong> v = generate_test(gen, test.first, test.second);
         auto beg = chrono::high_resolution_clock::now();
-
-        merge_sort(v);
-
+        counting_map_sort(v);
         auto end = chrono::high_resolution_clock::now();
         auto time = chrono::duration_cast<chrono::microseconds>(end - beg);
 
-        string result = (is_sorted(v) == 1) ? "yes" : "no";
-
-        cout << time.count() << " microsecs  sorted: " << result << endl;
+        cout << time.count() << " microsecs  sorted: " << ((is_sorted(v) == 1) ? "yes" : "no")<< endl;
     }
 
 }
