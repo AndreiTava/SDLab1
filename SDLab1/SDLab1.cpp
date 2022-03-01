@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <random>
 
-
 using namespace std;
 
 typedef long long llong;
@@ -21,7 +20,7 @@ void print_vect(vector<llong>& v)
     cout << endl;
 }
 
-vector<llong> generate_test(default_random_engine& gen ,const llong  size, const llong  max)
+vector<llong> generate_test(default_random_engine& gen ,const llong size, const llong max)
 {
     vector<llong> v(size);
     auto dist = uniform_int_distribution<llong>(1,max);
@@ -38,9 +37,38 @@ bool is_sorted(vector<llong>& v)
     return true;
 }
 
-void std_sort(vector<llong>& v)
+class sorting_alg
 {
-    sort(v.begin(), v.end());
+public:
+    static vector<llong> glo_aux;
+    const string name;
+    virtual const void sort(vector<llong>& v){};
+};
+
+class STL : sorting_alg
+{
+public:
+    const string name = "STL Sort";
+    const void sort(vector<llong>& v);
+} stl;
+class Merge : sorting_alg
+{
+private:
+
+    const void rec_merge(vector<llong>::iterator left, vector<llong>::iterator right);
+public:
+    const string name = "Merge Sort";
+    const void sort(vector<llong>& v);
+} merge;
+class Counting : sorting_alg
+{
+public:
+    const string name = "Counting Sort";
+    const void sort(vector<llong>& v);
+} counting;
+const void STL::sort(vector<llong>& v)
+{
+    std::sort(v.begin(), v.end());
 }
 
 void selection_sort(vector<llong>& v)
@@ -97,7 +125,7 @@ void insertion_sort(vector<llong>& v)
 //    }
 //    inplace_merge(left,middle,right);
 //}
-void rec_merge(vector<llong>::iterator left, vector<llong>::iterator right)
+const void Merge::rec_merge(vector<llong>::iterator left, vector<llong>::iterator right)
 {
 
     auto dist = distance(left, right);
@@ -128,33 +156,33 @@ void rec_merge(vector<llong>::iterator left, vector<llong>::iterator right)
     for (auto itcpy = glo_aux.begin(); itcpy != itaux; ++itcpy)
         *left++ = *itcpy;
 }
-void merge_sort(vector<llong>& v)
+const void Merge::sort(vector<llong>& v)
 {
     rec_merge(v.begin(), v.end());
 }
 
-void counting_sort(vector<llong>& v)
-{
-    llong max = 0;
-    for (const llong& nr : v)
-        if (nr > max)
-            max = nr;
-
-    if (max > glo_aux.size())
-        glo_aux.resize(max);
-
-    for (const llong& nr : v)
-        ++glo_aux[nr];
-
-    auto it = v.begin();
-    for (llong i=1; i<=max; ++i)
-        while (glo_aux[i])
-        {
-            *it++ = i;
-            --glo_aux[i];
-        }
-}
-void counting_map_sort(vector<llong>& v)
+//const void sort(vector<llong>& v)
+//{
+//    llong max = 0;
+//    for (const llong& nr : v)
+//        if (nr > max)
+//            max = nr;
+//
+//    if (max > glo_aux.size())
+//        glo_aux.resize(max);
+//
+//    for (const llong& nr : v)
+//        ++glo_aux[nr];
+//
+//    auto it = v.begin();
+//    for (llong i=1; i<=max; ++i)
+//        while (glo_aux[i])
+//        {
+//            *it++ = i;
+//            --glo_aux[i];
+//        }
+//}
+const void Counting::sort(vector<llong>& v)
 {
     map<llong, llong> aux;
 
@@ -174,6 +202,9 @@ using namespace std;
 
 int main()
 {
+    vector<sorting_alg&> sorts;
+    sorts.push_back(stl);
+
     llong n_tests;
 
     ifstream in("Tests.txt");
@@ -189,15 +220,15 @@ int main()
 
     for (auto& test : tests)
     {
-        cout << "size= " << test.first << " max=" << test.second << endl;
-
         vector<llong> v = generate_test(gen, test.first, test.second);
+        cout << "Test size: " << test.first << " Max Value: " << test.second << endl;
+        for(auto& sort : sorts)
         auto beg = chrono::high_resolution_clock::now();
-        counting_map_sort(v);
+        merge_sort(v);
         auto end = chrono::high_resolution_clock::now();
-        auto time = chrono::duration_cast<chrono::microseconds>(end - beg);
+        chrono::duration<double> time = end - beg;
 
-        cout << time.count() << " microsecs  sorted: " << ((is_sorted(v) == 1) ? "yes" : "no")<< endl;
+        cout << time.count() << "s Sorted: " << ((is_sorted(v) == 1) ? "yes\n" : "no\n");
     }
 
 }
