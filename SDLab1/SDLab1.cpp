@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <string>
 #include <vector>
 #include <map>
 #include <utility>
@@ -10,8 +11,6 @@
 using namespace std;
 
 typedef long long llong;
-
-vector<llong> glo_aux(1000000);
 
 void print_vect(vector<llong>& v)
 {
@@ -37,60 +36,122 @@ bool is_sorted(vector<llong>& v)
     return true;
 }
 
-class sorting_alg
+class Sorting_alg
 {
 public:
-    static vector<llong> glo_aux;
-    const string name;
+    string name;
     virtual const void sort(vector<llong>& v){};
 };
 
-class STL : sorting_alg
+class STL : public Sorting_alg
 {
 public:
-    const string name = "STL Sort";
-    const void sort(vector<llong>& v);
-} stl;
-class Merge : sorting_alg
-{
-private:
-
-    const void rec_merge(vector<llong>::iterator left, vector<llong>::iterator right);
-public:
-    const string name = "Merge Sort";
-    const void sort(vector<llong>& v);
-} merge;
-class Counting : sorting_alg
-{
-public:
-    const string name = "Counting Sort";
-    const void sort(vector<llong>& v);
-} counting;
-const void STL::sort(vector<llong>& v)
-{
-    std::sort(v.begin(), v.end());
-}
-
-void selection_sort(vector<llong>& v)
-{
-    auto min = v.begin();
-    for (auto it = v.begin(); it != v.end() - 1; ++it)
+    STL()
     {
-        min = it;
-        for (auto jt = it + 1; jt != v.end(); ++jt)
-            if (*jt > *min)
-                min=jt;
-        swap(*min, *it);
+       name = "STL Sort";
+    }
+    const void sort(vector<llong>& v) { std::sort(v.begin(), v.end()); };
+} stls;
+
+class Merge : public Sorting_alg
+{
+public:
+    Merge()
+    {
+        name = "Merge Sort";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+} merges;
+
+class Counting : public Sorting_alg
+{
+public:
+    Counting()
+    {
+        name = "Counting Sort";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+} countings;
+
+class CountingM : public Sorting_alg
+{
+public:
+    CountingM()
+    {
+        name = "Counting Sort(Map)";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+} countingsm;
+
+template <llong base>
+class LSDRadix : public Sorting_alg
+{
+public:
+    LSDRadix()
+    {
+        name = "LSD Radix(B" + std::to_string(base) + ") Sort";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+};
+LSDRadix<10> lsdradixs10;
+
+class Bubble : public Sorting_alg
+{
+public:
+    Bubble()
+    {
+        name = "Bubble Sort";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+} bubbles;
+
+class Selection : public Sorting_alg
+{
+public:
+    Selection()
+    {
+        name = "Selection Sort";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+} selections;
+
+class Insertion : public Sorting_alg
+{
+public:
+    Insertion()
+    {
+        name = "Insertion Sort";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+} insertions;
+
+const void Selection::sort(vector<llong>::iterator left, vector<llong>::iterator right)
+{
+    auto min = left;
+    for (;left != right - 1; ++left)
+    {
+        min = left;
+        for (auto it = left + 1; it != right; ++it)
+            if (*it < *min)
+                min=it;
+        swap(*min, *left);
     }
 }
 
-void bubble_sort(vector<llong>& v)
+const void Bubble::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
     bool sorted = false;
     while (!sorted)
     {
         sorted = true;
-        for (auto it = v.begin(); it != v.end() - 1; ++it)
+        for (auto it = left; it != right - 1; ++it)
             if (*it > *(it + 1))
             {
                 sorted = false;
@@ -100,12 +161,12 @@ void bubble_sort(vector<llong>& v)
 
 }
 
-void insertion_sort(vector<llong>& v)
+const void Insertion::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
-    for (auto it = v.begin() + 1; it != v.end(); ++it)
+    for (auto it = left + 1; it != right; ++it)
     {
         auto rt = it;
-        while (rt != v.begin() && *rt < *(rt - 1))
+        while (rt != left && *rt < *(rt - 1))
         {
             swap(*rt, *(rt - 1));
             --rt;
@@ -113,32 +174,21 @@ void insertion_sort(vector<llong>& v)
     }
 }
 
-//void rec_merge_short(vector<llong>::iterator left, vector<llong>::iterator right)
-//{
-//    auto dist = distance(left,right);
-//    auto middle = left;
-//    advance(middle, dist / 2);
-//    if (dist > 2)
-//    {
-//        rec_merge_short(left,middle);
-//        rec_merge_short(middle,right);
-//    }
-//    inplace_merge(left,middle,right);
-//}
-const void Merge::rec_merge(vector<llong>::iterator left, vector<llong>::iterator right)
+const void Merge::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
-
-    auto dist = distance(left, right);
-    if (dist > glo_aux.size())
-        glo_aux.resize(dist);
+    
+    size_t dist = right - left;
+    static vector<llong> aux(dist);
+    if (aux.size() < dist)
+        aux.resize(dist);
     auto middle = left;
-    advance(middle, dist / 2);
+    middle += dist / 2;
     if (dist > 2)
     {
-        rec_merge(left, middle);
-        rec_merge(middle, right);
+        sort(left, middle);
+        sort(middle, right);
     }
-    auto itlft = left, itrht = middle, itaux = glo_aux.begin();
+    auto itlft = left, itrht = middle, itaux = aux.begin();
     while (itlft != middle && itrht!= right)
     {
         if (itrht != right && *itlft <= *itrht)
@@ -153,57 +203,87 @@ const void Merge::rec_merge(vector<llong>::iterator left, vector<llong>::iterato
     while (itrht != right)
         *itaux++ = *itrht++;
 
-    for (auto itcpy = glo_aux.begin(); itcpy != itaux; ++itcpy)
+    for (auto itcpy = aux.begin(); itcpy != itaux; ++itcpy)
         *left++ = *itcpy;
-}
-const void Merge::sort(vector<llong>& v)
-{
-    rec_merge(v.begin(), v.end());
+    if (itaux == aux.end())
+        aux.clear();
 }
 
-//const void sort(vector<llong>& v)
-//{
-//    llong max = 0;
-//    for (const llong& nr : v)
-//        if (nr > max)
-//            max = nr;
-//
-//    if (max > glo_aux.size())
-//        glo_aux.resize(max);
-//
-//    for (const llong& nr : v)
-//        ++glo_aux[nr];
-//
-//    auto it = v.begin();
-//    for (llong i=1; i<=max; ++i)
-//        while (glo_aux[i])
-//        {
-//            *it++ = i;
-//            --glo_aux[i];
-//        }
-//}
-const void Counting::sort(vector<llong>& v)
+const void Counting::sort(vector<llong>::iterator left, vector<llong>::iterator right)
+{
+    llong max = 0;
+    for (auto it = left; it != right; ++it)
+        if (*it > max)
+            max = *it;
+
+    vector<llong> aux(max+1);
+
+    for (auto it = left; it != right; ++it)
+        ++aux[*it];
+
+    for (llong i=1; i<=max; ++i)
+        while (aux[i])
+        {
+            *left++ = i;
+            --aux[i];
+        }
+}
+const void CountingM::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
     map<llong, llong> aux;
 
-    for (const llong& nr : v)
-        ++aux[nr];
+    for (auto it = left; it != right; ++it)
+        ++aux[*it];
 
-    auto it = v.begin();
     for (auto mit = aux.begin(); mit != aux.end(); ++mit)
         while (mit->second)
         {
-            *it++ = mit->first;
+            *left++ = mit->first;
             --(mit->second);
         }
 };
 
+template <llong base>
+const void LSDRadix<base>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
+{
+    vector<llong> buckets[base];
+    llong den = 1;
+    while (true)
+    {
+        for (auto it = left; it != right; ++it)
+        {
+            llong cif = ((*it) / den) % base;
+            buckets[cif].push_back(*it);
+
+        }
+
+        if (buckets[0].size() == right - left)
+            break;
+
+        auto jt = left;
+        for (auto& bucket : buckets)
+        {
+            for (auto& nr : bucket)
+                *jt++ = nr;
+            bucket.clear();
+        }
+
+        den *= base;
+    }
+}
 using namespace std;
 
 int main()
 {
-    vector<sorting_alg&> sorts;
-    sorts.push_back(stl);
+    vector<Sorting_alg*> sorts;
+    sorts.push_back(&stls);
+    sorts.push_back(&merges);
+    sorts.push_back(&countings);
+    sorts.push_back(&lsdradixs10);
+    //sorts.push_back(&bubbles);
+    //sorts.push_back(&insertions);
+    //sorts.push_back(&selections);
+    //sorts.push_back(&countingm);
 
     llong n_tests;
 
@@ -220,16 +300,22 @@ int main()
 
     for (auto& test : tests)
     {
-        vector<llong> v = generate_test(gen, test.first, test.second);
-        cout << "Test size: " << test.first << " Max Value: " << test.second << endl;
-        for(auto& sort : sorts)
-        auto beg = chrono::high_resolution_clock::now();
-        merge_sort(v);
-        auto end = chrono::high_resolution_clock::now();
-        chrono::duration<double> time = end - beg;
-
-        cout << time.count() << "s Sorted: " << ((is_sorted(v) == 1) ? "yes\n" : "no\n");
+        vector<llong> v_test = generate_test(gen, test.first, test.second);
+        cout << "Test size: " << test.first << " Max Value: " << test.second << endl << endl;
+        for (auto& sort : sorts)
+        {
+            auto v = v_test;
+            //print_vect(v);
+            auto beg = chrono::high_resolution_clock::now();
+            sort->sort(v);
+            auto end = chrono::high_resolution_clock::now();
+            //print_vect(v);
+            chrono::duration<double> time = end - beg;
+            cout << sort->name << ": " << time.count() << "s Sorted: " << ((is_sorted(v) == 1) ? "yes\n" : "no\n")<<endl;
+        }
+        cout << endl;
     }
+    return 0;
 
 }
 
