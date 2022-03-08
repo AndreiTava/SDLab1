@@ -3,6 +3,7 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include <array>
 #include <map>
 #include <utility>
 #include <algorithm>
@@ -97,7 +98,35 @@ public:
     const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 };
-LSDRadix<10> lsdradixs10;
+LSDRadix<65536> lsdradixs;
+
+template <llong base>
+class LSDRadixN : public Sorting_alg
+{
+public:
+    LSDRadixN()
+    {
+        name = "New LSD Radix(B" + std::to_string(base) + ") Sort";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+};
+
+LSDRadixN<65536> newradixs;
+
+template <llong power>
+class LSDRadixBN : public Sorting_alg
+{
+public:
+    LSDRadixBN()
+    {
+        name = "Explicit LSD Radix(B2^" + std::to_string(power) + ") Sort";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+};
+
+LSDRadixBN<16> explradixs;
 
 class Bubble : public Sorting_alg
 {
@@ -132,6 +161,35 @@ public:
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 } insertions;
 
+class Shell : public Sorting_alg
+{
+    vector<llong> gaps;
+
+public:
+    Shell(initializer_list<llong> gaps_seq)
+    {
+        name = "Shell Sort";
+        gaps = gaps_seq;
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+}shells({1750, 701, 301, 132, 57, 23, 10, 4, 1});
+
+template<llong nr_buck>
+class Bucket : public Sorting_alg
+{
+    Sorting_alg* salg;
+public:
+    Bucket(Sorting_alg& alg)
+    {
+        salg = &alg;
+        name = "Bucket Sort(" + to_string(nr_buck) + " buckets, " + salg->name + ")";
+    }
+    //const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    //const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+};
+Bucket<50> buckets(stls);
+
 const void Selection::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
     auto min = left;
@@ -165,11 +223,22 @@ const void Insertion::sort(vector<llong>::iterator left, vector<llong>::iterator
 {
     for (auto it = left + 1; it != right; ++it)
     {
-        auto rt = it;
-        while (rt != left && *rt < *(rt - 1))
-        {
+        for(auto rt = it;rt != left && *rt < *(rt - 1); --rt)
             swap(*rt, *(rt - 1));
-            --rt;
+    }
+}
+
+const void Shell::sort(vector<llong>::iterator left, vector<llong>::iterator right)
+{
+    for(auto& gap : gaps)
+    {
+        for (llong index = 0; index < gap; ++index)
+        {
+            for (auto it = left + index + gap; it < right; it += gap)
+            {
+                for (auto rt = it; rt >= left + gap && *rt < *(rt - gap); rt -= gap)
+                    swap(*rt, *(rt - gap));
+            }
         }
     }
 }
@@ -246,7 +315,7 @@ const void CountingM::sort(vector<llong>::iterator left, vector<llong>::iterator
 template <llong base>
 const void LSDRadix<base>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
-    vector<llong> buckets[base];
+    vector<vector<llong>> buckets(base);
     llong den = 1;
     while (true)
     {
@@ -254,7 +323,6 @@ const void LSDRadix<base>::sort(vector<llong>::iterator left, vector<llong>::ite
         {
             llong cif = ((*it) / den) % base;
             buckets[cif].push_back(*it);
-
         }
 
         if (buckets[0].size() == right - left)
@@ -271,19 +339,101 @@ const void LSDRadix<base>::sort(vector<llong>::iterator left, vector<llong>::ite
         den *= base;
     }
 }
+template <llong base>
+const void LSDRadixN<base>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
+{
+    vector<llong> buckets(base);
+    vector<llong> sorted(right-left);
+    llong max = 0;
+    for (auto it = left; it != right; ++it)
+        if (*it > max)
+            max = *it;
+    llong den = 1;
+    while (max/den > 0)
+    {
+        for (auto it = left; it != right; ++it)
+        {
+            llong cif = ((*it) / den) % base;
+            ++buckets[cif];
+        }
+        for (auto it = buckets.begin() + 1; it != buckets.end(); ++it)
+            *it += *(it - 1);
+        for (auto it = right - 1; it >left; --it)
+        {
+            llong cif = ((*it) / den) % base;
+            sorted[buckets[cif] - 1] = *it;
+            --buckets[cif];
+        }
+
+        llong cif = ((*left) / den) % base;
+        sorted[buckets[cif] - 1] = *left;
+        --buckets[cif];
+
+        for (llong& nr : buckets)
+            nr = 0;
+        auto it = left;
+        for (const llong& nr : sorted)
+            *it++ = nr;
+
+        den *= base;
+    }
+}
+template <llong power>
+const void LSDRadixBN<power>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
+{
+    llong base = 1 << power;
+    vector<llong> buckets(base);
+    vector<llong> sorted(right - left);
+    llong max = 0;
+    for (auto it = left; it != right; ++it)
+        if (*it > max)
+            max = *it;
+    llong den = 0;
+    while ((max >> den) > 0)
+    {
+        for (auto it = left; it != right; ++it)
+        {
+            llong cif = ((*it) >> den) & (base - 1);
+            ++buckets[cif];
+        }
+        for (auto it = buckets.begin() + 1; it != buckets.end(); ++it)
+            *it += *(it - 1);
+        for (auto it = right - 1; it > left; --it)
+        {
+            llong cif = ((*it) >> den) & (base - 1);
+            sorted[buckets[cif] - 1] = *(it);
+            --buckets[cif];
+        }
+        llong cif = ((*left) >> den) & (base - 1);
+        sorted[buckets[cif] - 1] = *left;
+        --buckets[cif];
+
+        for (llong& nr : buckets)
+            nr = 0;
+        auto it = left;
+        for (const llong& nr : sorted)
+            *it++ = nr;
+
+        den +=power;
+    }
+}
+
 using namespace std;
 
 int main()
 {
     vector<Sorting_alg*> sorts;
     sorts.push_back(&stls);
-    sorts.push_back(&merges);
-    sorts.push_back(&countings);
-    sorts.push_back(&lsdradixs10);
+    //sorts.push_back(&merges);
+    //sorts.push_back(&countings);
+    //sorts.push_back(&lsdradixs);
+    sorts.push_back(&newradixs);
+    sorts.push_back(&explradixs);
     //sorts.push_back(&bubbles);
     //sorts.push_back(&insertions);
     //sorts.push_back(&selections);
-    //sorts.push_back(&countingm);
+    //sorts.push_back(&shells);
+    //sorts.push_back(&countingsm);
 
     llong n_tests;
 
@@ -311,7 +461,7 @@ int main()
             auto end = chrono::high_resolution_clock::now();
             //print_vect(v);
             chrono::duration<double> time = end - beg;
-            cout << sort->name << ": " << time.count() << "s Sorted: " << ((is_sorted(v) == 1) ? "yes\n" : "no\n")<<endl;
+            cout << sort->name << ": " << time.count() << "ms Sorted: " << ((is_sorted(v) == 1) ? "yes\n" : "no\n")<<endl;
         }
         cout << endl;
     }
