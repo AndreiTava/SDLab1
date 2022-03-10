@@ -311,9 +311,9 @@ const void Quick::sort(vector<llong>::iterator left, vector<llong>::iterator rig
     auto dist = right - left;
 	if(dist>2)
 	{
-        auto pivot = left + dist / 2;
+        auto pivot = right - 1;
         auto ins_it = left;
-        for(auto it = left; it!=right-1; ++it)
+        for(auto it = left; it!=right; ++it)
         {
             if (*it <= *pivot && it != pivot)
             {
