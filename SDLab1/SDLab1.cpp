@@ -65,6 +65,17 @@ public:
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 } merges;
 
+class Quick : public Sorting_alg
+{
+public:
+    Quick()
+    {
+        name = "QuickSort";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+} quicks;
+
 class Counting : public Sorting_alg
 {
 public:
@@ -88,17 +99,16 @@ public:
 } countingsm;
 
 template <llong base>
-class LSDRadix : public Sorting_alg
+class LSDRadixO : public Sorting_alg
 {
 public:
-    LSDRadix()
+    LSDRadixO()
     {
         name = "LSD Radix(B" + std::to_string(base) + ") Sort";
     }
     const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 };
-LSDRadix<65536> lsdradixs;
 
 template <llong base>
 class LSDRadixN : public Sorting_alg
@@ -115,18 +125,18 @@ public:
 LSDRadixN<65536> newradixs;
 
 template <llong power>
-class LSDRadixBN : public Sorting_alg
+class LSDRadix : public Sorting_alg
 {
 public:
-    LSDRadixBN()
+    LSDRadix()
     {
         name = "Explicit LSD Radix(B2^" + std::to_string(power) + ") Sort";
     }
     const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 };
+LSDRadix<16> radixs16;
 
-LSDRadixBN<16> explradixs;
 
 class Bubble : public Sorting_alg
 {
@@ -171,11 +181,16 @@ public:
         name = "Shell Sort";
         gaps = gaps_seq;
     }
+    Shell(vector<llong> gaps_seq)
+    {
+        name = "Shell Sort";
+        gaps = gaps_seq;
+    }
     const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 }shells({1750, 701, 301, 132, 57, 23, 10, 4, 1});
 
-template<llong nr_buck>
+template<llong nr_buck, llong threshold>
 class Bucket : public Sorting_alg
 {
     Sorting_alg* salg;
@@ -185,10 +200,23 @@ public:
         salg = &alg;
         name = "Bucket Sort(" + to_string(nr_buck) + " buckets, " + salg->name + ")";
     }
-    //const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
-    //const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right, llong nrb=nr_buck);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 };
-Bucket<50> buckets(stls);
+Bucket<50,100> buckets(stls);
+
+template <llong threshold>
+class Intro : public Sorting_alg
+{
+public:
+    Intro()
+    {
+        name = "IntroSort";
+    }
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
+    const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
+};
+Intro<100> intros;
 
 const void Selection::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
@@ -278,6 +306,28 @@ const void Merge::sort(vector<llong>::iterator left, vector<llong>::iterator rig
         aux.clear();
 }
 
+const void Quick::sort(vector<llong>::iterator left, vector<llong>::iterator right)
+{
+    auto dist = right - left;
+	if(dist>2)
+	{
+        auto pivot = left + dist / 2;
+        auto ins_it = left;
+        for(auto it = left; it!=right-1; ++it)
+        {
+            if (*it <= *pivot && it != pivot)
+            {
+                swap(*ins_it, *it);
+                ++ins_it;
+            }
+        }
+        swap(*ins_it, *pivot);
+
+        sort(left, ins_it);
+        sort(ins_it, right);
+	}
+};
+
 const void Counting::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
     llong max = 0;
@@ -313,7 +363,7 @@ const void CountingM::sort(vector<llong>::iterator left, vector<llong>::iterator
 };
 
 template <llong base>
-const void LSDRadix<base>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
+const void LSDRadixO<base>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
     vector<vector<llong>> buckets(base);
     llong den = 1;
@@ -379,7 +429,7 @@ const void LSDRadixN<base>::sort(vector<llong>::iterator left, vector<llong>::it
     }
 }
 template <llong power>
-const void LSDRadixBN<power>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
+const void LSDRadix<power>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
     llong base = 1 << power;
     vector<llong> buckets(base);
@@ -396,8 +446,10 @@ const void LSDRadixBN<power>::sort(vector<llong>::iterator left, vector<llong>::
             llong cif = ((*it) >> den) & (base - 1);
             ++buckets[cif];
         }
+
         for (auto it = buckets.begin() + 1; it != buckets.end(); ++it)
             *it += *(it - 1);
+
         for (auto it = right - 1; it > left; --it)
         {
             llong cif = ((*it) >> den) & (base - 1);
@@ -418,22 +470,58 @@ const void LSDRadixBN<power>::sort(vector<llong>::iterator left, vector<llong>::
     }
 }
 
+template <llong nr_buck, llong threshold>
+const void Bucket<nr_buck,threshold>::sort(vector<llong>::iterator left, vector<llong>::iterator right, llong nrb)
+{
+    vector<vector<llong>> buckets(nrb);
+    llong max = 0;
+    for (auto it = left; it != right; ++it)
+        if (*it > max)
+            max = *it;
+    ++max;
+	for (auto it = left; it != right; ++it)
+	{
+        llong buck = ((*it) * nr_buck) / max;
+		buckets[buck].push_back(*it);
+	}
+
+    for (auto& bucket : buckets)
+    {
+        if (bucket.size() <= threshold)
+            salg->sort(bucket);
+        else
+            sort(bucket.begin(), bucket.end());
+    }
+
+	auto jt = left;
+	for (auto& bucket : buckets)
+	{
+		for (auto& nr : bucket)
+			*jt++ = nr;
+		bucket.clear();
+	}
+}
+
+template <llong threshold>
+const void Intro<threshold>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
+{
+    static llong max_depth;
+}
 using namespace std;
 
 int main()
 {
     vector<Sorting_alg*> sorts;
     sorts.push_back(&stls);
-    //sorts.push_back(&merges);
+    sorts.push_back(&merges);
+    sorts.push_back(&quicks);
     //sorts.push_back(&countings);
-    //sorts.push_back(&lsdradixs);
-    sorts.push_back(&newradixs);
-    sorts.push_back(&explradixs);
+    //sorts.push_back(&radixs16);
+    //sorts.push_back(&buckets);
     //sorts.push_back(&bubbles);
     //sorts.push_back(&insertions);
     //sorts.push_back(&selections);
     //sorts.push_back(&shells);
-    //sorts.push_back(&countingsm);
 
     llong n_tests;
 
