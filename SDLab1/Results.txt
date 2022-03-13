@@ -1,45 +1,109 @@
-Test type: Random, Test size: 10, Max Value: 100
+Test type: Random, Test size: 10000, Max Value: 10000
 
-Shell Sort (Extended Ciura): 6e-07s Sorted: yes
+STL Sort: 0.000418s Sorted: yes
 
-Shell Sort (Tokuda): 4e-07s Sorted: yes
+Merge Sort: 0.0005781s Sorted: yes
 
-Shell Sort (Knuth): 1e-07s Sorted: yes
+Quick Sort(P:Med3): 0.0004393s Sorted: yes
+
+Binary LSD Radix(B:2^16) Sort: 0.0003079s Sorted: yes
+
+Bucket Sort(1000000 buckets, Insertion Sort): 0.0156417s Sorted: yes
+
+Shell Sort (Tokuda): 0.00084s Sorted: yes
 
 
-Test type: Random, Test size: 1000, Max Value: 1000
+Test type: Random, Test size: 100000, Max Value: 100000
 
-Shell Sort (Extended Ciura): 5.57e-05s Sorted: yes
+STL Sort: 0.0054688s Sorted: yes
 
-Shell Sort (Tokuda): 5.6e-05s Sorted: yes
+Merge Sort: 0.0072735s Sorted: yes
 
-Shell Sort (Knuth): 5.45e-05s Sorted: yes
+Quick Sort(P:Med3): 0.0057609s Sorted: yes
+
+Binary LSD Radix(B:2^16) Sort: 0.0017786s Sorted: yes
+
+Bucket Sort(1000000 buckets, Insertion Sort): 0.0388306s Sorted: yes
+
+Shell Sort (Tokuda): 0.0110666s Sorted: yes
 
 
 Test type: Random, Test size: 1000000, Max Value: 1000000
 
-Shell Sort (Extended Ciura): 0.182484s Sorted: yes
+STL Sort: 0.0649392s Sorted: yes
 
-Shell Sort (Tokuda): 0.153359s Sorted: yes
+Merge Sort: 0.0832872s Sorted: yes
 
-Shell Sort (Knuth): 0.230159s Sorted: yes
+Quick Sort(P:Med3): 0.06404s Sorted: yes
+
+Binary LSD Radix(B:2^16) Sort: 0.0190568s Sorted: yes
+
+Bucket Sort(1000000 buckets, Insertion Sort): 0.285518s Sorted: yes
+
+Shell Sort (Tokuda): 0.145923s Sorted: yes
 
 
 Test type: Random, Test size: 10000000, Max Value: 10000000
 
-Shell Sort (Extended Ciura): 2.31487s Sorted: yes
+STL Sort: 0.752116s Sorted: yes
 
-Shell Sort (Tokuda): 2.20406s Sorted: yes
+Merge Sort: 0.977884s Sorted: yes
 
-Shell Sort (Knuth): 3.73431s Sorted: yes
+Quick Sort(P:Med3): 0.723373s Sorted: yes
+
+Binary LSD Radix(B:2^16) Sort: 0.186969s Sorted: yes
+
+Bucket Sort(1000000 buckets, Insertion Sort): 2.4351s Sorted: yes
+
+Shell Sort (Tokuda): 2.06388s Sorted: yes
+
+
+Test type: Random, Test size: 1000, Max Value: 1000000000
+
+STL Sort: 3.25e-05s Sorted: yes
+
+Merge Sort: 4.4e-05s Sorted: yes
+
+Quick Sort(P:Med3): 3.54e-05s Sorted: yes
+
+Binary LSD Radix(B:2^16) Sort: 0.0003559s Sorted: yes
+
+Bucket Sort(1000000 buckets, Insertion Sort): 0.0099915s Sorted: yes
+
+Shell Sort (Tokuda): 0.00013s Sorted: yes
+
+
+Test type: Random, Test size: 10000000, Max Value: 1000
+
+STL Sort: 0.30307s Sorted: yes
+
+Merge Sort: 0.675235s Sorted: yes
+
+Quick Sort(P:Med3): 25.836s Sorted: yes
+
+Binary LSD Radix(B:2^16) Sort: 0.0648568s Sorted: yes
+
+Bucket Sort(1000000 buckets, Insertion Sort): 0.172817s Sorted: yes
+
+Shell Sort (Tokuda): 1.21851s Sorted: yes
 
 
 Test type: Random, Test size: 100000000, Max Value: 1000000000
 
-Shell Sort (Extended Ciura): 35.6933s Sorted: yes
+STL Sort: 8.73898s Sorted: yes
 
-Shell Sort (Tokuda): 33.188s Sorted: yes
+Merge Sort: 11.3791s Sorted: yes
 
-Shell Sort (Knuth): 71.8566s Sorted: yes
+Quick Sort(P:Med3): 8.3464s Sorted: yes
 
+Binary LSD Radix(B:2^16) Sort: 3.12381s Sorted: yes
+
+Bucket Sort(1000000 buckets, Insertion Sort): 10.6002s Sorted: yes
+
+Shell Sort (Tokuda): 29.577s Sorted: yes
+
+
+Test type: Ascending, Test size: 100000000, Max Value: 100000000
+
+STL Sort: 1.38427s Sorted: yes
 

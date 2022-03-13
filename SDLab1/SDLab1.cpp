@@ -46,22 +46,22 @@ bool is_sorted(vector<llong>& v)
 vector<llong> generate_ciura(llong max)
 {
     vector<llong> seq =  {1, 4, 10, 23, 57, 132, 301, 701, 1750};
-    llong next_term = int(2.5 *seq.back());
+    llong next_term = int(2.25 *seq.back());
     while (next_term < max)
     {
         seq.push_back(next_term);
-        next_term = int(2.5 * seq.back());
+        next_term = int(2.25 * seq.back());
     }
     return seq;
 }
 vector<llong> generate_tokuda(llong max)
 {
     vector<llong> seq = { 1 };
-    llong next_term = int(ceil(2.5 * seq.back() + 1));
+    llong next_term = int(ceil(2.25 * seq.back() + 1));
     while (next_term < max)
     {
         seq.push_back(next_term);
-        next_term = int(ceil(2.5 * seq.back() + 1));
+        next_term = int(ceil(2.25 * seq.back() + 1));
     }
     return seq;
 }
@@ -73,6 +73,17 @@ vector<llong> generate_knuth(llong max)
     {
         seq.push_back(next_term);
         next_term = 3 * seq.back() + 1;
+    }
+    return seq;
+}
+vector<llong> generate_shells(llong max)
+{
+    vector<llong> seq = { 1 };
+    llong next_term = 2 * seq.back();
+    while (next_term < floor(max / 2))
+    {
+        seq.push_back(next_term);
+        next_term = 2 * seq.back();
     }
     return seq;
 }
@@ -276,6 +287,7 @@ public:
 Shell shellsec(generate_ciura(100000000), "Extended Ciura");
 Shell shellst(generate_tokuda(100000000), "Tokuda");
 Shell shellsk(generate_knuth(100000000), "Knuth");
+Shell shellss(generate_shells(100000000), "Shells");
 
 template<llong nr_buck>
 class Bucket : public Sorting_alg
@@ -291,7 +303,9 @@ public:
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 };
 Bucket<1000000> bucketsi(insertions);
-Bucket<1000000> bucketss(stls);
+Bucket<100000> bucketsi2(insertions);
+Bucket<10000000> bucketsi3(insertions);
+Bucket<1000000> bucketss(shellst);
 Bucket<1000000> bucketsm(merges);
 Bucket<1000000> bucketsq(quicks3);
 template <llong threshold>
@@ -402,7 +416,7 @@ const void Merge::sort(vector<llong>::iterator left, vector<llong>::iterator rig
 const void Quick::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
     auto dist = right - left;
-    if (dist >= 2)
+    while (dist >= 2)
     {
         auto pivot = getPivot(left, right);
         swap(*pivot, *(right - 1));
@@ -418,8 +432,17 @@ const void Quick::sort(vector<llong>::iterator left, vector<llong>::iterator rig
         }
         swap(*ins_it, *pivot);
 
-        sort(left, ins_it);
-        sort( ins_it + 1, right);
+        if (ins_it - left < right - ins_it - 1)
+        {
+            sort(left, ins_it);
+            left = ins_it + 1;
+        }
+        else
+        {
+            sort(ins_it + 1, right);
+            right = ins_it;
+        }
+        dist = right - left;
     }
 };
 
@@ -601,25 +624,28 @@ using namespace std;
 
 int main()
 {
+    //se decomenteaza algoritmii de testat
     vector<Sorting_alg*> sorts;
-    //sorts.push_back(&stls);
-    //sorts.push_back(&merges);
-    //sorts.push_back(&quicks3);
-    //sorts.push_back(&quicksr);
-    //sorts.push_back(&quicksm);
-    //sorts.push_back(&quicksf);
-    //sorts.push_back(&quicksl);
+    sorts.push_back(&stls);
+    sorts.push_back(&merges);
+    sorts.push_back(&quicks3); //mediana din 3
+    //sorts.push_back(&quicksr); //random
+    //sorts.push_back(&quicksm); //mijloc
+    //sorts.push_back(&quicksf); //primul
+    //sorts.push_back(&quicksl); //ultimul
     //sorts.push_back(&countings);
-    //sorts.push_back(&radixs16);
-    //sorts.push_back(&radixsb);
-    //sorts.push_back(&bucketsi);
-    //sorts.push_back(&bucketss);
-    //sorts.push_back(&bucketsm);
-    //sorts.push_back(&bucketsq);
-    //sorts.push_back(&shells2);
-    sorts.push_back(&shellsec);
-    sorts.push_back(&shellst);
-    sorts.push_back(&shellsk);
+    sorts.push_back(&radixs16); //2^16
+    //sorts.push_back(&radixsb); //2^16 general(fara op pe biti)
+    sorts.push_back(&bucketsi); //10^6 + insertion
+    //sorts.push_back(&bucketsi2); // 10^5 + insertion
+    //sorts.push_back(&bucketsi3); // 10^7 + insertion
+    //sorts.push_back(&bucketss); // 10^6 + shell
+    //sorts.push_back(&bucketsm); // 10^6 + merge
+    //sorts.push_back(&bucketsq); // 10^6 + quick(med3)
+    //sorts.push_back(&shellsec); // Ciura extinsa (prin next=floor(prev*2.25) de la 1750)
+    sorts.push_back(&shellst); // Tokuda
+    //sorts.push_back(&shellsk); // Knuth ((3^k-1)/2)
+    //sorts.push_back(&shellss); // Shells (originala, injumatatire)
     //sorts.push_back(&bubbles);
     //sorts.push_back(&insertions);
     //sorts.push_back(&selections);
@@ -654,6 +680,7 @@ int main()
         llong max = get<2>(test);
         vector<llong> v_test = generate_test(gen,type, size, max);
         out <<"Test type: "<<type << ", Test size: " << size << ", Max Value: " << max << endl << endl;
+        cout << "Test type: " << type << ", Test size: " << size << ", Max Value: " << max << endl << endl;
         for (auto& sort : sorts)
         {
             auto v = v_test;
@@ -664,8 +691,10 @@ int main()
             //print_vect(v);
             chrono::duration<double> time = end - beg;
             out << sort->name << ": " << time.count() << "s Sorted: " << ((is_sorted(v) == 1) ? "yes\n" : "no\n")<<endl;
+            cout << sort->name << ": " << time.count() << "s Sorted: " << ((is_sorted(v) == 1) ? "yes\n" : "no\n") << endl;
         }
         out << endl;
+        cout << endl;
     }
     return 0;
 
