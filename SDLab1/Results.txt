@@ -1,0 +1,45 @@
+Test type: Random, Test size: 10, Max Value: 100
+
+Shell Sort (Extended Ciura): 6e-07s Sorted: yes
+
+Shell Sort (Tokuda): 4e-07s Sorted: yes
+
+Shell Sort (Knuth): 1e-07s Sorted: yes
+
+
+Test type: Random, Test size: 1000, Max Value: 1000
+
+Shell Sort (Extended Ciura): 5.57e-05s Sorted: yes
+
+Shell Sort (Tokuda): 5.6e-05s Sorted: yes
+
+Shell Sort (Knuth): 5.45e-05s Sorted: yes
+
+
+Test type: Random, Test size: 1000000, Max Value: 1000000
+
+Shell Sort (Extended Ciura): 0.182484s Sorted: yes
+
+Shell Sort (Tokuda): 0.153359s Sorted: yes
+
+Shell Sort (Knuth): 0.230159s Sorted: yes
+
+
+Test type: Random, Test size: 10000000, Max Value: 10000000
+
+Shell Sort (Extended Ciura): 2.31487s Sorted: yes
+
+Shell Sort (Tokuda): 2.20406s Sorted: yes
+
+Shell Sort (Knuth): 3.73431s Sorted: yes
+
+
+Test type: Random, Test size: 100000000, Max Value: 1000000000
+
+Shell Sort (Extended Ciura): 35.6933s Sorted: yes
+
+Shell Sort (Tokuda): 33.188s Sorted: yes
+
+Shell Sort (Knuth): 71.8566s Sorted: yes
+
+

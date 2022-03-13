@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <time.h>
 #include <map>
 #include <utility>
 #include <algorithm>
@@ -20,12 +21,17 @@ void print_vect(vector<llong>& v)
     cout << endl;
 }
 
-vector<llong> generate_test(default_random_engine& gen ,const llong size, const llong max)
+vector<llong> generate_test(default_random_engine& gen, const string type ,const llong size, const llong max)
 {
+
     vector<llong> v(size);
     auto dist = uniform_int_distribution<llong>(1,max);
-    for (llong& nr : v)
-        nr = dist(gen);
+	for (llong& nr : v)
+		nr = dist(gen);
+    if (type == "Ascending")
+        sort(v.begin(), v.end());
+    else if (type == "Descending")
+        sort(v.rbegin(), v.rend());
     return v;
 }
 
@@ -37,11 +43,45 @@ bool is_sorted(vector<llong>& v)
     return true;
 }
 
+vector<llong> generate_ciura(llong max)
+{
+    vector<llong> seq =  {1, 4, 10, 23, 57, 132, 301, 701, 1750};
+    llong next_term = int(2.5 *seq.back());
+    while (next_term < max)
+    {
+        seq.push_back(next_term);
+        next_term = int(2.5 * seq.back());
+    }
+    return seq;
+}
+vector<llong> generate_tokuda(llong max)
+{
+    vector<llong> seq = { 1 };
+    llong next_term = int(ceil(2.5 * seq.back() + 1));
+    while (next_term < max)
+    {
+        seq.push_back(next_term);
+        next_term = int(ceil(2.5 * seq.back() + 1));
+    }
+    return seq;
+}
+vector<llong> generate_knuth(llong max)
+{
+    vector<llong> seq = { 1 };
+    llong next_term = 3*seq.back() + 1;
+    while (next_term < ceil(max/3))
+    {
+        seq.push_back(next_term);
+        next_term = 3 * seq.back() + 1;
+    }
+    return seq;
+}
 class Sorting_alg
 {
 public:
     string name;
     virtual const void sort(vector<llong>& v){};
+    virtual const void sort(vector<llong>::iterator left, vector<llong>::iterator right){};
 };
 
 class STL : public Sorting_alg
@@ -67,14 +107,58 @@ public:
 
 class Quick : public Sorting_alg
 {
-public:
-    Quick()
+    const vector<llong>::iterator getPivot(vector<llong>::iterator left, vector<llong>::iterator right)
     {
-        name = "QuickSort";
+	    switch(piv_type)
+	    {
+	    case 4:
+	        {
+            auto mid = left + (right - left) / 2;
+            if (*left > *mid)
+                swap(*left, *mid);
+            if (*left > *(right - 1))
+                swap(*left, *(right - 1));
+            if (*(right - 1) > *mid)
+                swap(*mid, *(right - 1));
+            return right-1;
+	        }
+	    case 3:
+        {
+            srand(time(nullptr));
+            return left + rand() % (right - left);
+        }
+	    case 2:
+        {
+            return left + (right - left) / 2;
+        }
+	    case 1:
+        {
+            return right - 1;
+        }
+        case 0:
+        {
+            return left;
+        }
+	    default:
+        {
+            return left;
+        }
+	    }
+    };
+    int piv_type;
+public:
+    Quick(int type,string piv)
+    {
+        piv_type = type;
+        name = "Quick Sort(P:" + piv + ")";
     }
     const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
-} quicks;
+} quicks3(4,"Med3");
+Quick quicksf(0, "First");
+Quick quicksl(1, "Last");
+Quick quicksm(2, "Mid");
+Quick quicksr(3, "Random");
 
 class Counting : public Sorting_alg
 {
@@ -116,13 +200,13 @@ class LSDRadixN : public Sorting_alg
 public:
     LSDRadixN()
     {
-        name = "New LSD Radix(B" + std::to_string(base) + ") Sort";
+        name = "LSD Radix(B:" + std::to_string(base) + ") Sort";
     }
     const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 };
 
-LSDRadixN<65536> newradixs;
+LSDRadixN<65536> radixsb;
 
 template <llong power>
 class LSDRadix : public Sorting_alg
@@ -130,7 +214,7 @@ class LSDRadix : public Sorting_alg
 public:
     LSDRadix()
     {
-        name = "Explicit LSD Radix(B2^" + std::to_string(power) + ") Sort";
+        name = "Binary LSD Radix(B:2^" + std::to_string(power) + ") Sort";
     }
     const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
@@ -181,16 +265,19 @@ public:
         name = "Shell Sort";
         gaps = gaps_seq;
     }
-    Shell(vector<llong> gaps_seq)
+    Shell(vector<llong> gaps_seq,string seq_name)
     {
-        name = "Shell Sort";
+        name = "Shell Sort ("+seq_name+")";
         gaps = gaps_seq;
     }
     const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
-}shells({1750, 701, 301, 132, 57, 23, 10, 4, 1});
+};
+Shell shellsec(generate_ciura(100000000), "Extended Ciura");
+Shell shellst(generate_tokuda(100000000), "Tokuda");
+Shell shellsk(generate_knuth(100000000), "Knuth");
 
-template<llong nr_buck, llong threshold>
+template<llong nr_buck>
 class Bucket : public Sorting_alg
 {
     Sorting_alg* salg;
@@ -200,11 +287,13 @@ public:
         salg = &alg;
         name = "Bucket Sort(" + to_string(nr_buck) + " buckets, " + salg->name + ")";
     }
-    const void sort(vector<llong>::iterator left, vector<llong>::iterator right, llong nrb=nr_buck);
+    const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 };
-Bucket<50,100> buckets(stls);
-
+Bucket<1000000> bucketsi(insertions);
+Bucket<1000000> bucketss(stls);
+Bucket<1000000> bucketsm(merges);
+Bucket<1000000> bucketsq(quicks3);
 template <llong threshold>
 class Intro : public Sorting_alg
 {
@@ -258,14 +347,18 @@ const void Insertion::sort(vector<llong>::iterator left, vector<llong>::iterator
 
 const void Shell::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
-    for(auto& gap : gaps)
+    auto dist = right - left;
+    for(auto gap = gaps.rbegin(); gap != gaps.rend(); ++gap)
     {
-        for (llong index = 0; index < gap; ++index)
+        if (*gap < dist)
         {
-            for (auto it = left + index + gap; it < right; it += gap)
+            for (llong index = 0; index < *gap; ++index)
             {
-                for (auto rt = it; rt >= left + gap && *rt < *(rt - gap); rt -= gap)
-                    swap(*rt, *(rt - gap));
+                for (auto it = left + index + *gap; it < right; it += *gap)
+                {
+                    for (auto rt = it; rt >= left + *gap && *rt < *(rt - *gap); rt -= *gap)
+                        swap(*rt, *(rt - *gap));
+                }
             }
         }
     }
@@ -309,13 +402,15 @@ const void Merge::sort(vector<llong>::iterator left, vector<llong>::iterator rig
 const void Quick::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
     auto dist = right - left;
-	if(dist>2)
-	{
-        auto pivot = right - 1;
+    if (dist >= 2)
+    {
+        auto pivot = getPivot(left, right);
+        swap(*pivot, *(right - 1));
+        pivot = right - 1;
         auto ins_it = left;
-        for(auto it = left; it!=right; ++it)
+        for(auto it = left; it!=right - 1; ++it)
         {
-            if (*it <= *pivot && it != pivot)
+            if (*it <= *pivot)
             {
                 swap(*ins_it, *it);
                 ++ins_it;
@@ -324,8 +419,8 @@ const void Quick::sort(vector<llong>::iterator left, vector<llong>::iterator rig
         swap(*ins_it, *pivot);
 
         sort(left, ins_it);
-        sort(ins_it, right);
-	}
+        sort( ins_it + 1, right);
+    }
 };
 
 const void Counting::sort(vector<llong>::iterator left, vector<llong>::iterator right)
@@ -470,10 +565,10 @@ const void LSDRadix<power>::sort(vector<llong>::iterator left, vector<llong>::it
     }
 }
 
-template <llong nr_buck, llong threshold>
-const void Bucket<nr_buck,threshold>::sort(vector<llong>::iterator left, vector<llong>::iterator right, llong nrb)
+template <llong nr_buck>
+const void Bucket<nr_buck>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
-    vector<vector<llong>> buckets(nrb);
+    vector<vector<llong>> buckets(nr_buck);
     llong max = 0;
     for (auto it = left; it != right; ++it)
         if (*it > max)
@@ -487,19 +582,14 @@ const void Bucket<nr_buck,threshold>::sort(vector<llong>::iterator left, vector<
 
     for (auto& bucket : buckets)
     {
-        if (bucket.size() <= threshold)
-            salg->sort(bucket);
-        else
-            sort(bucket.begin(), bucket.end());
+        if(!bucket.empty())
+    		salg->sort(bucket);
     }
 
 	auto jt = left;
 	for (auto& bucket : buckets)
-	{
 		for (auto& nr : bucket)
 			*jt++ = nr;
-		bucket.clear();
-	}
 }
 
 template <llong threshold>
@@ -512,34 +602,58 @@ using namespace std;
 int main()
 {
     vector<Sorting_alg*> sorts;
-    sorts.push_back(&stls);
-    sorts.push_back(&merges);
-    sorts.push_back(&quicks);
+    //sorts.push_back(&stls);
+    //sorts.push_back(&merges);
+    //sorts.push_back(&quicks3);
+    //sorts.push_back(&quicksr);
+    //sorts.push_back(&quicksm);
+    //sorts.push_back(&quicksf);
+    //sorts.push_back(&quicksl);
     //sorts.push_back(&countings);
     //sorts.push_back(&radixs16);
-    //sorts.push_back(&buckets);
+    //sorts.push_back(&radixsb);
+    //sorts.push_back(&bucketsi);
+    //sorts.push_back(&bucketss);
+    //sorts.push_back(&bucketsm);
+    //sorts.push_back(&bucketsq);
+    //sorts.push_back(&shells2);
+    sorts.push_back(&shellsec);
+    sorts.push_back(&shellst);
+    sorts.push_back(&shellsk);
     //sorts.push_back(&bubbles);
     //sorts.push_back(&insertions);
     //sorts.push_back(&selections);
-    //sorts.push_back(&shells);
 
     llong n_tests;
 
     ifstream in("Tests.txt");
 
     in >> n_tests;
-    vector<pair<llong,llong>> tests(n_tests);
+    vector<tuple<string,llong,llong>> tests(n_tests);
     for (auto it = tests.begin(); it != tests.end(); ++it)
-        in >> it->first>>it->second;
+    {
+        string type;
+        llong size;
+        llong max;
+        in >> type >> size >> max;
+        *it = tie(type, size, max);
 
+    }
+
+    in.close();
+
+    ofstream out("Results.txt");
     random_device s_gen;
 
     auto gen = default_random_engine(s_gen());
 
     for (auto& test : tests)
     {
-        vector<llong> v_test = generate_test(gen, test.first, test.second);
-        cout << "Test size: " << test.first << " Max Value: " << test.second << endl << endl;
+        string type = get<0>(test);
+        llong size = get<1>(test);
+        llong max = get<2>(test);
+        vector<llong> v_test = generate_test(gen,type, size, max);
+        out <<"Test type: "<<type << ", Test size: " << size << ", Max Value: " << max << endl << endl;
         for (auto& sort : sorts)
         {
             auto v = v_test;
@@ -549,9 +663,9 @@ int main()
             auto end = chrono::high_resolution_clock::now();
             //print_vect(v);
             chrono::duration<double> time = end - beg;
-            cout << sort->name << ": " << time.count() << "ms Sorted: " << ((is_sorted(v) == 1) ? "yes\n" : "no\n")<<endl;
+            out << sort->name << ": " << time.count() << "s Sorted: " << ((is_sorted(v) == 1) ? "yes\n" : "no\n")<<endl;
         }
-        cout << endl;
+        out << endl;
     }
     return 0;
 
