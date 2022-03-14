@@ -14,6 +14,13 @@ using namespace std;
 
 typedef long long llong;
 
+
+/* CODUL ESTE ORIBIL, PUTEAM IMPLEMENTA CLASELE CEVA MAI ELEGANT
+ * DAR CAND AM REALIZAT ERA DEJA PREA MARE PROIECTUL SI DEADLINEUL
+ * ERA APROAPE.... MACAR NU E PROIECT LA POO
+ */
+
+
 void print_vect(vector<llong>& v)
 {
     for (const llong & nr : v)
@@ -31,7 +38,10 @@ vector<llong> generate_test(default_random_engine& gen, const string type ,const
     if (type == "Ascending")
         sort(v.begin(), v.end());
     else if (type == "Descending")
-        sort(v.rbegin(), v.rend());
+    {
+        sort(v.begin(), v.end());
+        reverse(v.begin(), v.end());
+    }
     return v;
 }
 
@@ -47,7 +57,7 @@ vector<llong> generate_ciura(llong max)
 {
     vector<llong> seq =  {1, 4, 10, 23, 57, 132, 301, 701, 1750};
     llong next_term = int(2.25 *seq.back());
-    while (next_term < max)
+    while (next_term <= int(max/2.25))
     {
         seq.push_back(next_term);
         next_term = int(2.25 * seq.back());
@@ -58,7 +68,7 @@ vector<llong> generate_tokuda(llong max)
 {
     vector<llong> seq = { 1 };
     llong next_term = int(ceil(2.25 * seq.back() + 1));
-    while (next_term < max)
+    while (next_term <= int(max / 2.25))
     {
         seq.push_back(next_term);
         next_term = int(ceil(2.25 * seq.back() + 1));
@@ -69,7 +79,7 @@ vector<llong> generate_knuth(llong max)
 {
     vector<llong> seq = { 1 };
     llong next_term = 3*seq.back() + 1;
-    while (next_term < ceil(max/3))
+    while (next_term <= ceil(max/3))
     {
         seq.push_back(next_term);
         next_term = 3 * seq.back() + 1;
@@ -80,7 +90,7 @@ vector<llong> generate_shells(llong max)
 {
     vector<llong> seq = { 1 };
     llong next_term = 2 * seq.back();
-    while (next_term < floor(max / 2))
+    while (next_term <= floor(max / 2))
     {
         seq.push_back(next_term);
         next_term = 2 * seq.back();
@@ -271,11 +281,6 @@ class Shell : public Sorting_alg
     vector<llong> gaps;
 
 public:
-    Shell(initializer_list<llong> gaps_seq)
-    {
-        name = "Shell Sort";
-        gaps = gaps_seq;
-    }
     Shell(vector<llong> gaps_seq,string seq_name)
     {
         name = "Shell Sort ("+seq_name+")";
@@ -288,6 +293,7 @@ Shell shellsec(generate_ciura(100000000), "Extended Ciura");
 Shell shellst(generate_tokuda(100000000), "Tokuda");
 Shell shellsk(generate_knuth(100000000), "Knuth");
 Shell shellss(generate_shells(100000000), "Shells");
+Shell shellsc({ 1,4,10,23,57,132,301,701, 1750}, "Ciura");
 
 template<llong nr_buck>
 class Bucket : public Sorting_alg
@@ -297,17 +303,18 @@ public:
     Bucket(Sorting_alg& alg)
     {
         salg = &alg;
-        name = "Bucket Sort(" + to_string(nr_buck) + " buckets, " + salg->name + ")";
+        name = "Bucket Sort(" + ((nr_buck>0) ? to_string(nr_buck) : "Adaptive") + " buckets, " + salg->name + ")";
     }
     const void sort(vector<llong>::iterator left, vector<llong>::iterator right);
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 };
+Bucket<0> bucketai(insertions);
 Bucket<1000000> bucketsi(insertions);
 Bucket<100000> bucketsi2(insertions);
 Bucket<10000000> bucketsi3(insertions);
-Bucket<1000000> bucketss(shellst);
-Bucket<1000000> bucketsm(merges);
-Bucket<1000000> bucketsq(quicks3);
+Bucket<0> bucketss(shellsec);
+Bucket<0> bucketsm(merges);
+Bucket<0> bucketsq(quicks3);
 template <llong threshold>
 class Intro : public Sorting_alg
 {
@@ -354,8 +361,11 @@ const void Insertion::sort(vector<llong>::iterator left, vector<llong>::iterator
 {
     for (auto it = left + 1; it != right; ++it)
     {
-        for(auto rt = it;rt != left && *rt < *(rt - 1); --rt)
-            swap(*rt, *(rt - 1));
+        llong elem = *it;
+        auto rt = it;
+        for(;rt != left && elem < *(rt - 1); --rt)
+            *rt =*(rt - 1);
+        *rt = elem;
     }
 }
 
@@ -368,10 +378,18 @@ const void Shell::sort(vector<llong>::iterator left, vector<llong>::iterator rig
         {
             for (llong index = 0; index < *gap; ++index)
             {
-                for (auto it = left + index + *gap; it < right; it += *gap)
+                if (index + *gap < dist)
                 {
-                    for (auto rt = it; rt >= left + *gap && *rt < *(rt - *gap); rt -= *gap)
-                        swap(*rt, *(rt - *gap));
+                    for (auto it = left + index + *gap; it < right; it += *gap)
+                    {
+                        llong elem = *it;
+                        auto rt = it;
+                        for (; rt >= left + *gap && elem < *(rt - *gap); rt -= *gap)
+                            *rt = *(rt - *gap);
+                        *rt = elem;
+                        if (it > right - *gap)
+                            break;
+                    }
                 }
             }
         }
@@ -591,7 +609,12 @@ const void LSDRadix<power>::sort(vector<llong>::iterator left, vector<llong>::it
 template <llong nr_buck>
 const void Bucket<nr_buck>::sort(vector<llong>::iterator left, vector<llong>::iterator right)
 {
-    vector<vector<llong>> buckets(nr_buck);
+    llong nr_bucks = 0;
+    if (nr_buck == 0)
+        nr_bucks = ((right - left) / 100) > 0 ? (right-left) / 100 : 10 ;
+    else
+        nr_bucks = nr_buck;
+    vector<vector<llong>> buckets(nr_bucks);
     llong max = 0;
     for (auto it = left; it != right; ++it)
         if (*it > max)
@@ -599,7 +622,7 @@ const void Bucket<nr_buck>::sort(vector<llong>::iterator left, vector<llong>::it
     ++max;
 	for (auto it = left; it != right; ++it)
 	{
-        llong buck = ((*it) * nr_buck) / max;
+        llong buck = ((*it) * nr_bucks) / max;
 		buckets[buck].push_back(*it);
 	}
 
@@ -626,26 +649,28 @@ int main()
 {
     //se decomenteaza algoritmii de testat
     vector<Sorting_alg*> sorts;
-    sorts.push_back(&stls);
-    sorts.push_back(&merges);
-    sorts.push_back(&quicks3); //mediana din 3
+    //sorts.push_back(&stls);
+    //sorts.push_back(&merges);
+    //sorts.push_back(&quicks3); //mediana din 3
     //sorts.push_back(&quicksr); //random
     //sorts.push_back(&quicksm); //mijloc
     //sorts.push_back(&quicksf); //primul
     //sorts.push_back(&quicksl); //ultimul
-    //sorts.push_back(&countings);
-    sorts.push_back(&radixs16); //2^16
+    sorts.push_back(&shellsec); // Ciura extinsa (prin next=floor(prev*2.25) de la 1750)
+    sorts.push_back(&shellst); // Tokuda
+    sorts.push_back(&shellsk); // Knuth ((3^k-1)/2)
+    sorts.push_back(&shellss); // Shells (originala, injumatatire)
+    sorts.push_back(&shellsc); // Ciura 
+    //sorts.push_back(&radixs16); //2^16 (operatii pe biti)
     //sorts.push_back(&radixsb); //2^16 general(fara op pe biti)
-    sorts.push_back(&bucketsi); //10^6 + insertion
+    //sorts.push_back(&countings);
+    //sorts.push_back(&bucketai); // size/100 buckets + insertion
+    //sorts.push_back(&bucketsi); //10^6 + insertion
     //sorts.push_back(&bucketsi2); // 10^5 + insertion
     //sorts.push_back(&bucketsi3); // 10^7 + insertion
-    //sorts.push_back(&bucketss); // 10^6 + shell
-    //sorts.push_back(&bucketsm); // 10^6 + merge
-    //sorts.push_back(&bucketsq); // 10^6 + quick(med3)
-    //sorts.push_back(&shellsec); // Ciura extinsa (prin next=floor(prev*2.25) de la 1750)
-    sorts.push_back(&shellst); // Tokuda
-    //sorts.push_back(&shellsk); // Knuth ((3^k-1)/2)
-    //sorts.push_back(&shellss); // Shells (originala, injumatatire)
+    //sorts.push_back(&bucketss); // size/100 + shell
+    //sorts.push_back(&bucketsm); // size/100 + merge
+    //sorts.push_back(&bucketsq); // size/100 + quick(med3)
     //sorts.push_back(&bubbles);
     //sorts.push_back(&insertions);
     //sorts.push_back(&selections);
