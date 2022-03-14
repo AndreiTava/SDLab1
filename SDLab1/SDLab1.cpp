@@ -227,7 +227,9 @@ public:
     const void sort(vector<llong>& v) { sort(v.begin(), v.end()); };
 };
 
-LSDRadixN<65536> radixsb;
+LSDRadixN<16> radixsb16;
+LSDRadixN<65536> radixsb65536;
+LSDRadixN<10> radixsb10;
 
 template <llong power>
 class LSDRadix : public Sorting_alg
@@ -560,8 +562,10 @@ const void LSDRadixN<base>::sort(vector<llong>::iterator left, vector<llong>::it
         auto it = left;
         for (const llong& nr : sorted)
             *it++ = nr;
-
-        den *= base;
+        if (den * base > 0)
+            den *= base;
+        else
+            break;
     }
 }
 template <llong power>
@@ -575,7 +579,7 @@ const void LSDRadix<power>::sort(vector<llong>::iterator left, vector<llong>::it
         if (*it > max)
             max = *it;
     llong den = 0;
-    while ((max >> den) > 0)
+    while ((max >> den) > 0 && den < 64)
     {
         for (auto it = left; it != right; ++it)
         {
@@ -622,6 +626,11 @@ const void Bucket<nr_buck>::sort(vector<llong>::iterator left, vector<llong>::it
     ++max;
 	for (auto it = left; it != right; ++it)
 	{
+        if(*it*nr_bucks <=0)
+		{
+            cout<<"Sortare Imposibila, Integer Overflow\n";
+            return;
+		}
         llong buck = ((*it) * nr_bucks) / max;
 		buckets[buck].push_back(*it);
 	}
@@ -649,22 +658,24 @@ int main()
 {
     //se decomenteaza algoritmii de testat
     vector<Sorting_alg*> sorts;
-    //sorts.push_back(&stls);
-    //sorts.push_back(&merges);
-    //sorts.push_back(&quicks3); //mediana din 3
+    sorts.push_back(&stls);
+    sorts.push_back(&merges);
+    sorts.push_back(&quicks3); //mediana din 3
     //sorts.push_back(&quicksr); //random
     //sorts.push_back(&quicksm); //mijloc
     //sorts.push_back(&quicksf); //primul
     //sorts.push_back(&quicksl); //ultimul
     sorts.push_back(&shellsec); // Ciura extinsa (prin next=floor(prev*2.25) de la 1750)
-    sorts.push_back(&shellst); // Tokuda
-    sorts.push_back(&shellsk); // Knuth ((3^k-1)/2)
-    sorts.push_back(&shellss); // Shells (originala, injumatatire)
-    sorts.push_back(&shellsc); // Ciura 
-    //sorts.push_back(&radixs16); //2^16 (operatii pe biti)
-    //sorts.push_back(&radixsb); //2^16 general(fara op pe biti)
+    //sorts.push_back(&shellst); // Tokuda
+    //sorts.push_back(&shellsk); // Knuth ((3^k-1)/2)
+    //sorts.push_back(&shellss); // Shells (originala, injumatatire)
+    //sorts.push_back(&shellsc); // Ciura 
+    sorts.push_back(&radixs16); // baza 2^16 (operatii pe biti)
+    //sorts.push_back(&radixsb65536); // baza 2^16 fara op de biti
+    //sorts.push_back(&radixsb16); //baza 16
+    //sorts.push_back(&radixsb10); //baza 10
     //sorts.push_back(&countings);
-    //sorts.push_back(&bucketai); // size/100 buckets + insertion
+    sorts.push_back(&bucketai); // size/100 buckets + insertion
     //sorts.push_back(&bucketsi); //10^6 + insertion
     //sorts.push_back(&bucketsi2); // 10^5 + insertion
     //sorts.push_back(&bucketsi3); // 10^7 + insertion
