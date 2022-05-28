@@ -1,2 +1,1 @@
-# PROIECT 1: ALGORITMI DE SORTARE
-Sursa se gaseste in SDLab1.
+# Data Structures Project 1: Sorting Algorithms
